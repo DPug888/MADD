@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Differential Equation Solver</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap" rel="stylesheet">
+  <style>
+    /* Reset */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      height: 100%;
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      background-attachment: fixed;
+      font-family: 'Orbitron', sans-serif;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: url('https://www.transparenttextures.com/patterns/stardust.png');
+      opacity: 0.08;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    h1 {
+      margin-top: 40px;
+      font-size: 2.8rem;
+      color: #8a2be2; /* Cosmic purple blue */
+      letter-spacing: 1.5px;
+      text-shadow: 2px 2px 8px rgba(138, 43, 226, 0.8);
+      animation: fadeIn 1.5s ease forwards;
+      text-align: center;
+      z-index: 1;
+      position: relative;
+    }
+
+    .container {
+      margin: 40px auto;
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      padding: 30px;
+      border-radius: 20px;
+      width: 90%;
+      max-width: 600px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      align-items: center;
+      box-shadow: 0 15px 30px rgba(0, 198, 255, 0.3), 0 10px 10px rgba(0,0,0,0.25);
+      transform: translateY(0);
+      animation: floatCard 6s ease-in-out infinite alternate;
+      position: relative;
+      z-index: 1;
+    }
+
+    input, select, button {
+      width: 100%;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+      background-color: rgba(255, 255, 255, 0.15);
+      color: #ffffff;
+      outline: none;
+      transition: 0.3s;
+      font-family: 'Orbitron', sans-serif;
+    }
+
+    input:focus, select:focus {
+      border-color: #8a2be2;
+      background-color: rgba(255, 255, 255, 0.25);
+      box-shadow: 0 0 8px #8a2be2;
+    }
+
+    button {
+      background: linear-gradient(to right, #8a2be2, #4b0082);
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      border: none;
+      transition: 0.4s;
+      font-family: 'Orbitron', sans-serif;
+    }
+
+    button:hover {
+      background: linear-gradient(to right, #4b0082, #8a2be2);
+      transform: scale(1.05);
+      box-shadow: 0 0 15px #8a2be2;
+    }
+
+    table {
+      width: 100%;
+      margin-top: 20px;
+      border-collapse: collapse;
+      animation: fadeIn 2.5s ease forwards;
+    }
+
+    th, td {
+      padding: 10px;
+      text-align: center;
+      border: 1px solid rgba(255,255,255,0.2);
+      color: #ffffff;
+    }
+
+    th {
+      background-color: rgba(106, 17, 203, 0.7);
+    }
+
+    canvas {
+      margin-top: 20px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 15px;
+      padding: 10px;
+      animation: growIn 2s ease forwards;
+      box-shadow: 0 0 20px rgba(0, 198, 255, 0.4);
+    }
+
+    /* Animations */
+    @keyframes fadeIn {
+      0% { opacity: 0; }
+      100% { opacity: 1; }
+    }
+
+    @keyframes growIn {
+      0% { transform: scale(0.8); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    @keyframes floatCard {
+      0% { transform: translateY(0px); }
+      100% { transform: translateY(-10px); }
+    }
+  </style>
+</head>
+
+<body>
+
+<h1>Differential Equation Solver</h1>
+
+<div class="container">
+  <input type="text" id="equation" placeholder="Enter f(x, y) like (x + y)">
+  <input type="number" id="x0" placeholder="Initial x₀" step="any">
+  <input type="number" id="y0" placeholder="Initial y₀" step="any">
+  <input type="number" id="h" placeholder="Step Size (h)" step="any">
+  <input type="number" id="steps" placeholder="Number of Steps (n)">
+  
+  <select id="method">
+    <option value="euler">Euler's Method</option>
+    <option value="runge-kutta">Runge-Kutta 4th Order</option>
+    <option value="taylor">Taylor Series Method</option>
+    <option value="milne">Milne’s Predictor-Corrector</option>
+  </select>
+
+  <button onclick="solveEquation()">Solve</button>
+
+  <div id="output"></div>
+
+  <canvas id="graph" width="400" height="300"></canvas>
+</div>
+
+<script>
+function f(x, y, expression) {
+  return eval(expression);
+}
+
+function solveEquation() {
+  const expr = document.getElementById('equation').value;
+  let x = parseFloat(document.getElementById('x0').value);
+  let y = parseFloat(document.getElementById('y0').value);
+  const h = parseFloat(document.getElementById('h').value);
+  const n = parseInt(document.getElementById('steps').value);
+  const method = document.getElementById('method').value;
+  
+  let results = [];
+
+  if (method === 'euler') {
+    for (let i = 0; i <= n; i++) {
+      results.push({ x, y });
+      y = y + h * f(x, y, expr);
+      x += h;
+    }
+  } else if (method === 'runge-kutta') {
+    for (let i = 0; i <= n; i++) {
+      results.push({ x, y });
+      let k1 = h * f(x, y, expr);
+      let k2 = h * f(x + h/2, y + k1/2, expr);
+      let k3 = h * f(x + h/2, y + k2/2, expr);
+      let k4 = h * f(x + h, y + k3, expr);
+      y = y + (k1 + 2*k2 + 2*k3 + k4) / 6;
+      x += h;
+    }
+  } else if (method === 'taylor') {
+    for (let i = 0; i <= n; i++) {
+      results.push({ x, y });
+      y = y + h * f(x, y, expr) + (h**2/2)*(1 + f(x, y, expr));
+      x += h;
+    }
+  } else if (method === 'milne') {
+    for (let j = 0; j < 3; j++) {
+      results.push({ x, y });
+      let k1 = h * f(x, y, expr);
+      let k2 = h * f(x + h/2, y + k1/2, expr);
+      let k3 = h * f(x + h/2, y + k2/2, expr);
+      let k4 = h * f(x + h, y + k3, expr);
+      y = y + (k1 + 2*k2 + 2*k3 + k4) / 6;
+      x += h;
+    }
+    for (let i = 3; i <= n; i++) {
+      let y_predict = results[i-3].y + (4*h/3)*(2*f(results[i-2].x, results[i-2].y, expr) - f(results[i-1].x, results[i-1].y, expr) + 2*f(x, y, expr));
+      let y_correct = results[i-1].y + (h/3)*(f(results[i-1].x, results[i-1].y, expr) + 4*f(x, y, expr) + f(x+h, y_predict, expr));
+      results.push({ x, y: y_correct });
+      x += h;
+      y = y_correct;
+    }
+  }
+
+  displayResults(results);
+  drawGraph(results);
+}
+
+function displayResults(results) {
+  let output = "<table><tr><th>Step</th><th>x</th><th>y</th></tr>";
+  results.forEach((point, idx) => {
+    output += `<tr><td>${idx}</td><td>${point.x.toFixed(4)}</td><td>${point.y.toFixed(4)}</td></tr>`;
+  });
+  output += "</table>";
+  document.getElementById('output').innerHTML = output;
+}
+
+function drawGraph(results) {
+  const canvas = document.getElementById('graph');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+  ctx.beginPath();
+  ctx.moveTo(results[0].x * 30 + 50, canvas.height - (results[0].y * 20 + 50));
+  
+  for (let i = 1; i < results.length; i++) {
+    ctx.lineTo(results[i].x * 30 + 50, canvas.height - (results[i].y * 20 + 50));
+  }
+  
+  ctx.strokeStyle = "#8a2be2";
+  ctx.lineWidth = 3;
+  ctx.shadowColor = "#8a2be2";
+  ctx.shadowBlur = 10;
+  ctx.stroke();
+}
+</script>
+
+</body>
+</html>

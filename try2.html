@@ -11,7 +11,7 @@
       padding: 0;
       box-sizing: border-box;
     }
-
+  
     html, body {
       height: 100%;
       background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
@@ -19,7 +19,7 @@
       font-family: 'Orbitron', sans-serif;
       overflow-x: hidden;
     }
-
+  
     body::before {
       content: '';
       position: fixed;
@@ -30,19 +30,18 @@
       pointer-events: none;
       z-index: 0;
     }
-
+  
     h1 {
       margin-top: 40px;
       font-size: 2.8rem;
-      color: #8a2be2; /* Cosmic purple blue */
+      color: #f3f1c5;
       letter-spacing: 1.5px;
-      text-shadow: 2px 2px 8px rgba(138, 43, 226, 0.8);
       animation: fadeIn 1.5s ease forwards;
       text-align: center;
       z-index: 1;
       position: relative;
     }
-
+  
     .container {
       margin: 40px auto;
       background: rgba(255, 255, 255, 0.05);
@@ -61,7 +60,7 @@
       position: relative;
       z-index: 1;
     }
-
+  
     input, select, button {
       width: 100%;
       padding: 12px;
@@ -74,47 +73,47 @@
       transition: 0.3s;
       font-family: 'Orbitron', sans-serif;
     }
-
+  
     input:focus, select:focus {
-      border-color: #8a2be2;
+      border-color: #f3f1c5;
       background-color: rgba(255, 255, 255, 0.25);
-      box-shadow: 0 0 8px #8a2be2;
+      box-shadow: 0 0 8px #f3f1c5;
     }
-
+  
     button {
-      background: linear-gradient(to right, #8a2be2, #4b0082);
-      color: white;
+      background: linear-gradient(to right, #f3f1c5, #f0eb94);
+      color: rgba(31, 86, 101, 0.3);
       font-weight: bold;
       cursor: pointer;
       border: none;
       transition: 0.4s;
       font-family: 'Orbitron', sans-serif;
     }
-
+  
     button:hover {
-      background: linear-gradient(to right, #4b0082, #8a2be2);
+      background: linear-gradient(to right, #dddeb4, #ffffaa);
       transform: scale(1.05);
-      box-shadow: 0 0 15px #8a2be2;
+      box-shadow: 0 0 15px #085a57;
     }
-
+  
     table {
       width: 100%;
       margin-top: 20px;
       border-collapse: collapse;
       animation: fadeIn 2.5s ease forwards;
     }
-
+  
     th, td {
       padding: 10px;
       text-align: center;
       border: 1px solid rgba(255,255,255,0.2);
-      color: #ffffff;
+      color: rgb(255, 255, 255);
     }
-
+  
     th {
-      background-color: rgba(106, 17, 203, 0.7);
+      background-color: #52bac1;
     }
-
+  
     canvas {
       margin-top: 20px;
       background: rgba(255, 255, 255, 0.1);
@@ -123,23 +122,56 @@
       animation: growIn 2s ease forwards;
       box-shadow: 0 0 20px rgba(0, 198, 255, 0.4);
     }
-
+  
     /* Animations */
     @keyframes fadeIn {
       0% { opacity: 0; }
       100% { opacity: 1; }
     }
-
+  
     @keyframes growIn {
       0% { transform: scale(0.8); opacity: 0; }
       100% { transform: scale(1); opacity: 1; }
     }
-
+  
     @keyframes floatCard {
       0% { transform: translateY(0px); }
       100% { transform: translateY(-10px); }
     }
+  
+    /* Dropdown specific styles */
+  select {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  font-size: 16px;
+  background-color: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  outline: none;
+  transition: 0.3s;
+  font-family: 'Orbitron', sans-serif;
+  appearance: none; /* removes default arrow for better consistency */
+}
+
+select:focus {
+  border-color: #f3f1c5;
+  background-color: rgba(255, 255, 255, 0.25);
+  box-shadow: 0 0 8px #f3f1c5;
+}
+
+option {
+  background-color: #203a43;
+  color: #ffffff;
+  font-family: 'Orbitron', sans-serif;
+}
+
+  
+    option:hover {
+      background-color: #52bac1;
+    }
   </style>
+  
 </head>
 
 <body>
@@ -236,24 +268,113 @@ function displayResults(results) {
   document.getElementById('output').innerHTML = output;
 }
 
+
 function drawGraph(results) {
   const canvas = document.getElementById('graph');
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  
-  ctx.beginPath();
-  ctx.moveTo(results[0].x * 30 + 50, canvas.height - (results[0].y * 20 + 50));
-  
-  for (let i = 1; i < results.length; i++) {
-    ctx.lineTo(results[i].x * 30 + 50, canvas.height - (results[i].y * 20 + 50));
+
+  if (results.length === 0) return;
+
+  let xValues = results.map(p => p.x);
+  let yValues = results.map(p => p.y);
+  let xMin = Math.min(...xValues), xMax = Math.max(...xValues);
+  let yMin = Math.min(...yValues), yMax = Math.max(...yValues);
+
+  const padding = 50;
+  const width = canvas.width - 2 * padding;
+  const height = canvas.height - 2 * padding;
+
+  const scaleX = width / (xMax - xMin);
+  const scaleY = height / (yMax - yMin);
+
+  function mapX(x) {
+    return padding + (x - xMin) * scaleX;
   }
+
+  function mapY(y) {
+    return canvas.height - padding - (y - yMin) * scaleY;
+  }
+
+  // Draw grid lines
+  ctx.strokeStyle = "#444";
+  ctx.lineWidth = 1;
+  ctx.setLineDash([2, 3]);
   
-  ctx.strokeStyle = "#8a2be2";
+  const stepCount = 5;
+
+  // Horizontal grid lines
+  for (let i = 0; i <= stepCount; i++) {
+    const yVal = yMin + (i / stepCount) * (yMax - yMin);
+    const y = mapY(yVal);
+    ctx.beginPath();
+    ctx.moveTo(padding, y);
+    ctx.lineTo(canvas.width - padding, y);
+    ctx.stroke();
+
+    // y-axis labels
+    ctx.fillStyle = "#fff";
+    ctx.font = "12px Orbitron";
+    ctx.textAlign = "right";
+    ctx.fillText(yVal.toFixed(2), padding - 8, y + 4);
+  }
+
+  // Vertical grid lines
+  for (let i = 0; i <= stepCount; i++) {
+    const xVal = xMin + (i / stepCount) * (xMax - xMin);
+    const x = mapX(xVal);
+    ctx.beginPath();
+    ctx.moveTo(x, padding);
+    ctx.lineTo(x, canvas.height - padding);
+    ctx.stroke();
+
+    // x-axis labels
+    ctx.fillStyle = "#fff";
+    ctx.font = "12px Orbitron";
+    ctx.textAlign = "center";
+    ctx.fillText(xVal.toFixed(2), x, canvas.height - padding + 20);
+  }
+
+  // Draw axes
+  ctx.setLineDash([]);
+  ctx.strokeStyle = "#aaa";
+  ctx.lineWidth = 2;
+
+  // Y-axis
+  const yAxisX = mapX(0);
+  if (yAxisX >= padding && yAxisX <= canvas.width - padding) {
+    ctx.beginPath();
+    ctx.moveTo(yAxisX, padding);
+    ctx.lineTo(yAxisX, canvas.height - padding);
+    ctx.stroke();
+  }
+
+  // X-axis
+  const xAxisY = mapY(0);
+  if (xAxisY >= padding && xAxisY <= canvas.height - padding) {
+    ctx.beginPath();
+    ctx.moveTo(padding, xAxisY);
+    ctx.lineTo(canvas.width - padding, xAxisY);
+    ctx.stroke();
+  }
+
+  // Draw graph line
+  ctx.beginPath();
+  ctx.moveTo(mapX(results[0].x), mapY(results[0].y));
+  for (let i = 1; i < results.length; i++) {
+    ctx.lineTo(mapX(results[i].x), mapY(results[i].y));
+  }
+
+  ctx.strokeStyle = "#f3f1c5";
   ctx.lineWidth = 3;
-  ctx.shadowColor = "#8a2be2";
-  ctx.shadowBlur = 10;
+  ctx.shadowColor = "#f3f1c5";
+  ctx.shadowBlur = 8;
   ctx.stroke();
+
 }
+
+
+
 </script>
 
 </body>
